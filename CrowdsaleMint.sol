@@ -83,7 +83,7 @@ contract Token is SafeMath {
 	}
 
 	// Transfer function used to send tokens to an address
-	function transfer(address _to, uint256 _value){
+	function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) {
 		// Check if the creator actually has the required balance
 		require(balanceOf[msg.sender] >= _value);
 		// Check if the amount sent will not overflow
@@ -129,7 +129,7 @@ contract AssetToken is admined, Token{
 	}
 
 	// Toekn transfer function
-	function transfer(address _to, uint256 _value){
+	function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) {
 		// Check if balance of the sender is not negative
 		require(balanceOf[msg.sender] > 0);
 		// Check if balance of the sender is greater than or equal than the amount transfered
@@ -186,7 +186,7 @@ contract CrowdSale is SafeMath{
     // Time when the crowdfund was completed
     uint public completedAt;
     // Price per token in wei (18 digits after 0)
-    uint256 public priceInWei;
+    uint256 public tokensPerEth;
     // Minimum funding target 
     uint public fundingMinimumTargetInWei; 
     // The token used as reward
@@ -219,7 +219,7 @@ contract CrowdSale is SafeMath{
 
     // Check if the amount sent is greater than the minimum price
     modifier isMinimum() {
-        require(msg.value >= priceInWei);
+        require(msg.value >= tokensPerEth);
         _;
     }
 
@@ -238,7 +238,7 @@ contract CrowdSale is SafeMath{
 
     // Check the ratio (no decimal values i.e. 1.2 TOKEN) is correct
     modifier inMultipleOfPrice() {
-        require(msg.value%priceInWei == 0);
+        require(msg.value%tokensPerEth == 0);
         _;
     }
 
@@ -278,7 +278,7 @@ contract CrowdSale is SafeMath{
         // Create a token object from the address of the reward token
         tokenReward =  new AssetToken(0,"Testing","TTK",0, this);
         // Set the price for 1 token (the conversion ratio with ether)
-        priceInWei = _tokensPerEther;
+        tokensPerEth = _tokensPerEther;
         // Trigger the crowdsale initialization event
         LogFunderInitialized(
             creator,
@@ -312,7 +312,7 @@ contract CrowdSale is SafeMath{
         // Set current crowdfund balance to the total amount of ether raised
         currentBalance = totalRaised;
 
-        uint tokens = safeDiv(safeMul(msg.value, priceInWei), 1 ether);
+        uint tokens = safeDiv(safeMul(msg.value, tokensPerEth), 1 ether);
 
         tokenReward.mintToken(msg.sender, tokens);
 
